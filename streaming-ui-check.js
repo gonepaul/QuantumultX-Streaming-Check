@@ -33,12 +33,6 @@ function countryFlag(code) {
   if (!/^[A-Z]{2}$/.test(code)) return "";
   return String.fromCodePoint(...code.split("").map(c => 127397 + c.charCodeAt(0)));
 }
-function regionText(region) {
-  if (!region) return "";
-  const r = String(region).toUpperCase();
-  const f = countryFlag(r);
-  return ARROW + "⟦" + (f ? f + " " : "") + r + "⟧";
-}
 function result(name, status, region, detail) { return { name, status, region: region || "", detail: detail || "" }; }
 function errResult(name, e) {
   const text = String(e && (e.message || e) || "未知异常");
@@ -316,12 +310,38 @@ const GROUPS = [
   ["🤖 AI 与社交", ["ChatGPT","Claude","Copilot","TikTok"]]
 ];
 
-function renderItem(x) {
-  const icon = {ok:"✅",limited:"⚠️",no:"❌",banned:"⛔️",error:"❗️",timeout:"⏱",unknown:"❔"}[x.status] || "❔";
-  const label = {ok:"支持",limited:"受限",no:"不支持",banned:"被封锁",error:"检测异常",timeout:"超时",unknown:"无法确认"}[x.status] || "无法确认";
-  const detail = x.detail ? ` <small style="color:#888">${escapeHTML(x.detail)}</small>` : "";
-  return `<div style="margin:8px 0"><b>${escapeHTML(x.name)}</b>：${icon} ${label}${regionText(x.region)}${detail}</div>`;
+function renderRow(x, isLast) {
+  const status = x.status;
+  const detail = x.detail || "";
+  const region = (x.region || "").toUpperCase();
+  const flag = countryFlag(region);
+  const regionBadge = region ? ` <span style="font-family:-apple-system,SF Pro Text,Menlo,monospace;font-weight:600;color:#007aff;">⟦${flag ? flag + " " : ""}${region}⟧</span>` : "";
+
+  let statusHtml = "";
+  if (status === S.OK) {
+    statusHtml = `<span style="color:#28a745;font-weight:600;">✅ 支持</span>${regionBadge}`;
+  } else if (status === S.LIMITED) {
+    let sub = "受限";
+    if (/自制/i.test(detail)) sub = "仅自制";
+    else if (/验证/i.test(detail)) sub = "需验证";
+    else if (/429/i.test(detail)) sub = "限流";
+    statusHtml = `<span style="color:#ff9500;font-weight:600;">⚠️ ${sub}</span>${regionBadge}`;
+  } else if (status === S.NO) {
+    statusHtml = `<span style="color:#ff3b30;font-weight:600;">❌ 不支持</span>${regionBadge}`;
+  } else if (status === S.BANNED) {
+    statusHtml = `<span style="color:#af52de;font-weight:600;">⛔️ 封锁</span>${regionBadge}`;
+  } else if (status === S.TIMEOUT) {
+    statusHtml = `<span style="color:#8e8e93;font-weight:500;">⏱ 超时</span>`;
+  } else if (status === S.ERROR) {
+    statusHtml = `<span style="color:#ff3b30;font-weight:600;">❗️ 异常</span>`;
+  } else {
+    statusHtml = `<span style="color:#8e8e93;font-weight:500;">❔ 未知</span>${regionBadge}`;
+  }
+
+  const border = isLast ? "" : "border-bottom:0.5px solid rgba(128,128,128,0.15);";
+  return `<tr><td style="padding:6px 0;text-align:left;font-weight:500;font-size:13.5px;white-space:nowrap;${border}">${escapeHTML(x.name)}</td><td style="padding:6px 0;text-align:right;font-size:13px;white-space:nowrap;${border}">${statusHtml}</td></tr>`;
 }
+
 function escapeHTML(s) { return String(s || "").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
 function getPolicyName() {
   return new Promise(resolve => {
@@ -340,13 +360,32 @@ function getPolicyName() {
   const rows = settled.map((v,i) => v.status === "fulfilled" ? v.value : errResult(CHECKS[i].name || "Unknown",v.reason));
   const byName = Object.fromEntries(rows.map(x => [x.name,x]));
   const node = await getPolicyName();
-  let html = `<div style="font-family:-apple-system;padding:4px 8px;line-height:1.35">`;
-  for (const [title,names] of GROUPS) {
-    html += `<h3 style="margin:14px 0 7px">${title}</h3>`;
-    html += names.filter(n => byName[n]).map(n => renderItem(byName[n])).join("");
+
+  let cards = "";
+  for (const [title, names] of GROUPS) {
+    const list = names.filter(n => byName[n]).map(n => byName[n]);
+    if (!list.length) continue;
+    const rowsHtml = list.map((x, i) => renderRow(x, i === list.length - 1)).join("");
+    cards += `
+      <div style="margin-top:10px;margin-bottom:4px;font-size:12.5px;font-weight:600;color:#8e8e93;letter-spacing:-0.2px;">${escapeHTML(title)}</div>
+      <div style="background:rgba(128,128,128,0.08);border-radius:10px;padding:1px 12px;margin-bottom:8px;">
+        <table style="width:100%;border-collapse:collapse;">
+          ${rowsHtml}
+        </table>
+      </div>`;
   }
-  html += `<hr><div style="color:#CD5C5C"><b>节点</b> ➟ ${escapeHTML(node)}</div>`;
-  html += `<div style="margin-top:8px;color:#888;font-size:12px">“支持”仅代表当前公开端点通过；❔ 表示接口变化或证据不足，不误报为“不支持”。</div></div>`;
+
+  const html = `
+    <div style="font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;padding:2px 4px;line-height:1.2;">
+      ${cards}
+      <div style="margin-top:10px;padding:7px 10px;background:rgba(205,92,92,0.12);border-radius:8px;font-size:12.5px;font-weight:600;color:#cd5c5c;text-align:center;">
+        节点 ➟ ${escapeHTML(node)}
+      </div>
+      <div style="margin-top:6px;font-size:11px;color:#8e8e93;text-align:center;">
+        “支持”仅代表当前公开端点通过 · 无法确认不误报
+      </div>
+    </div>`;
+
   $done({title:"📺 流媒体与 AI 解锁检测",htmlMessage:html});
 })().catch(e => {
   $done({title:"📺 流媒体与 AI 解锁检测",htmlMessage:`<p>❗️ 主流程异常：${escapeHTML(e && (e.message || e))}</p>`});
