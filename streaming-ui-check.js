@@ -239,11 +239,18 @@ async function checkParamount() {
 async function checkPeacock() {
   const name = "Peacock";
   try {
+    // Peacock 正常首页自身包含大量名为 unavailable 的组件/文案；
+    // 只能用 HTTP 重定向目标判断地区封锁，不能扫描整个 HTML。
     const r = await get("https://www.peacocktv.com/", {opts:{redirection:false}});
+    const code = statusCode(r);
     const loc = header(r,"location");
-    if (/unavailable|geo-availability/i.test(loc + " " + (r.body || ""))) return result(name,S.NO,"US","地区限制");
-    if (statusCode(r) === 200 || (statusCode(r) >= 300 && statusCode(r) < 400)) return result(name,S.OK,"US","主页未触发地区限制");
-    return result(name,S.UNKNOWN,"","HTTP " + statusCode(r));
+    if (code >= 300 && code < 400 && /(?:\/|\b)(?:unavailable|geo-availability)(?:[/?#]|\b)/i.test(loc)) {
+      return result(name,S.NO,"US","重定向至地区不可用页面");
+    }
+    if (code === 200) return result(name,S.OK,"US","美国站首页可用");
+    if (code >= 300 && code < 400) return result(name,S.UNKNOWN,"",loc ? "重定向："+loc : "未提供重定向目标");
+    if (code === 403 || code === 451) return result(name,S.BANNED,"","访问被拒绝");
+    return result(name,S.UNKNOWN,"","HTTP " + code);
   } catch(e) { return errResult(name,e); }
 }
 
