@@ -389,12 +389,10 @@ function getPolicyName() {
     <div style="font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;padding:2px;line-height:1.2;box-sizing:border-box;width:100%;max-width:100%;overflow-x:hidden;">
       ${cards}
       <div style="text-align:center;margin-top:10px;box-sizing:border-box;">
-        <span style="display:inline-block;padding:5px 12px;background:rgba(205,92,92,0.12);border-radius:12px;font-size:12px;font-weight:600;color:#cd5c5c;max-width:100%;word-break:break-word;box-sizing:border-box;line-height:1.4;">
-          节点 ➟ ${escapeHTML(node)}
-        </span>
+        <span style="display:inline-block;padding:5px 8px;background:rgba(205,92,92,0.12);font-size:12px;font-weight:600;color:#cd5c5c;max-width:100%;word-break:break-word;box-sizing:border-box;line-height:1.4;">&nbsp;&nbsp;节点 ➟ ${escapeHTML(node)}&nbsp;</span>
       </div>
       <div style="margin-top:6px;font-size:10.5px;color:#8e8e93;text-align:center;box-sizing:border-box;width:100%;word-break:break-word;">
-        “支持”仅代表当前公开端点通过 · 无法确认不误报 (2026.09.23-v3)
+        “支持”仅代表当前公开端点通过 · 无法确认不误报
       </div>
     </div>`;
 
