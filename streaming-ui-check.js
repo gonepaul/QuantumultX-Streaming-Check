@@ -1,6 +1,6 @@
 /***
  * Quantumult X 流媒体 / AI 解锁检测（Modern Edition）
- * Updated: 2026-09-10
+ * Updated: 2026-09-23
  *
  * 参考实现：
  * - https://github.com/HsukqiLee/MediaUnlockTest
@@ -367,21 +367,24 @@ function getPolicyName() {
     if (!list.length) continue;
     const rowsHtml = list.map((x, i) => renderRow(x, i === list.length - 1)).join("");
     cards += `
-      <div style="margin-top:10px;margin-bottom:4px;font-size:12.5px;font-weight:600;color:#8e8e93;letter-spacing:-0.2px;">${escapeHTML(title)}</div>
-      <div style="background:rgba(128,128,128,0.08);border-radius:10px;padding:1px 12px;margin-bottom:8px;">
-        <table style="width:100%;border-collapse:collapse;">
+      <div style="margin-top:10px;margin-bottom:4px;font-size:12.5px;font-weight:600;color:#8e8e93;letter-spacing:-0.2px;box-sizing:border-box;">${escapeHTML(title)}</div>
+      <div style="background:rgba(128,128,128,0.08);border-radius:10px;padding:1px 12px;margin-bottom:8px;box-sizing:border-box;width:100%;max-width:100%;">
+        <table style="width:100%;border-collapse:collapse;box-sizing:border-box;">
           ${rowsHtml}
         </table>
       </div>`;
   }
 
   const html = `
-    <div style="font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;padding:2px 4px;line-height:1.2;">
+    <style>
+      * { box-sizing: border-box; }
+    </style>
+    <div style="font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;padding:2px 4px;line-height:1.2;box-sizing:border-box;width:100%;max-width:100%;overflow-x:hidden;">
       ${cards}
-      <div style="margin-top:10px;padding:7px 10px;background:rgba(205,92,92,0.12);border-radius:8px;font-size:12.5px;font-weight:600;color:#cd5c5c;text-align:center;">
+      <div style="margin-top:10px;padding:7px 10px;background:rgba(205,92,92,0.12);border-radius:8px;font-size:12.5px;font-weight:600;color:#cd5c5c;text-align:center;box-sizing:border-box;width:100%;max-width:100%;word-break:break-word;overflow-wrap:anywhere;">
         节点 ➟ ${escapeHTML(node)}
       </div>
-      <div style="margin-top:6px;font-size:11px;color:#8e8e93;text-align:center;">
+      <div style="margin-top:6px;font-size:11px;color:#8e8e93;text-align:center;box-sizing:border-box;width:100%;word-break:break-word;">
         “支持”仅代表当前公开端点通过 · 无法确认不误报
       </div>
     </div>`;
